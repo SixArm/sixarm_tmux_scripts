@@ -1,0 +1,100 @@
+#!/bin/zsh
+set -euf -o pipefail
+out() { printf %s\\n "$*" ; }
+cmd() { command -v $1 >/dev/null 2>&1 ; }
+
+##
+# Launch tmux with a sesson and windows suitable for Rails development.
+#
+# Syntax:
+#
+#     tmux-rails [session-name]
+#
+# Example:
+#
+#     cd myapp
+#     tmux-rails
+#
+#
+# ## What this does
+#
+# The script attaches to session-name.
+#
+#   * If the session doesn't exist, then this creates it.
+#   * The _session-name_ defaults to the basename of the pwd.
+#
+# The script launches these windows with these commands:
+#
+#   * 1:ed (editor) = `$EDITOR`
+#   * 2:qa (quality assurance) = `rake test`
+#   * 3:ll (log listing) = `cd log && tail -f $RAILS_ENV.log`
+#   * 4:cc (console) = `rails console`
+#   * 5:db (database) = `rails db -p`
+#   * 6:ws (webserver) = `rails server`
+#   * 7:bg (background misc. work, such as command line tools)
+#   * 8:cd (continuous deployment, such as integration and delivery)
+#   * 9:op (operations monitoring, such as metrics and analytics) 
+#
+# ## Commands
+#
+# This script will choose the "rails" command:
+#
+#   * If the $RAILS env var is set, then use it.
+#   * If "bin/rails" is runnable, then use it.
+#   * If "bundle" command is runnable, then use "bundle exec rails".
+#
+# This script will do the same as above for the "rake" command.
+#
+#
+# ## Tracking
+#
+# Program: tmux-rails
+# Version: 3.1.0
+# Created: 2013-08-02
+# Updated: 2018-02-25
+# License: GPL
+# Contact: Joel Parker Henderson (joel@joelparkerhenderson.com)
+##
+
+# Choose a command for bundle.
+if [ -z ${BUNDLE_EXEC+_} ]; then
+  if $(cmd bundle); then
+    BUNDLE_EXEC="bundle exec"
+  else
+    BUNDLE_EXEC=""
+  fi
+fi
+
+# Choose a commmand for rails.
+if [ -z ${RAILS+_} ]; then
+  if [ -x 'bin/rails' ]; then
+    RAILS="bin/rails"
+  else
+    RAILS="$bundle_exec rails"
+  fi
+fi
+
+# Choose a commmand for rake.
+if [ -z ${RAKE+_} ]; then
+  if [ -x 'bin/rake' ]; then
+    RAKE="bin/rake"
+  else
+    RAKE="$bundle_exec rake"
+  fi
+fi
+
+RAILS_ENV=${RAILS_ENV:-development}
+
+# The session name defaults to the current directory's basename.
+s=${1-`basename \`pwd\``}
+
+tmux-start \
+"ed" "$EDITOR" \
+"qa" "$RAKE spec" \
+"ll" "cd log && tail -f $RAILS_ENV.log"
+"cc" "$RAILS console}" \
+"db" "$RAILS db" \
+"ws" "$RAILS server" \
+"bg" "" \
+"cd" "" \
+"op" "" \

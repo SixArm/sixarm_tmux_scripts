@@ -1,0 +1,66 @@
+#!/bin/zsh
+set -euf -o pipefail
+out() { printf %s\\n "$*" ; }
+cmd() { command -v $1 >/dev/null 2>&1 ; }
+
+##
+# Start tmux with a sesson and windows.
+#
+# Syntax:
+#
+#     tmux-start <session-name> [<window-name> [window-keys]] ...
+#
+# Example:
+#
+#     tmux-start demo-session win-1 ls win-2 ps
+#
+#
+# ## What this does
+#
+# The script attaches to session-name.
+#
+#   * If the session doesn't exist, then this creates it.
+#   * The _session-name_ defaults to the basename of the pwd.
+#
+# ## Tracking
+#
+# Program: tmux-start
+# Version: 3.1.0
+# Created: 2013-08-02
+# Updated: 2018-02-25
+# License: GPL
+# Contact: Joel Parker Henderson (joel@joelparkerhenderson.com)
+##
+
+# We expect the TMUX environment variable to be unset.
+if [ -z ${TMUX+_} ]; then
+    # noop
+else
+    out "TMUX environment variable is already set, so exit"
+    exit 1
+fi
+
+s="$1"; shift
+
+# Set the name the terminal window to the session name.
+# This line is optional -- you may comment it out if you prefer.
+# You may prefer to set your own title, or may already be using
+# something such as zsh auto title, or OSX iTerm2 appearance settings
+# to automatically set window & tab titles, or some other approach.
+echo -e "\033]1;$s\007"
+
+# Create the new session or attach to the existing session.
+tmux new-session -A -D -d -s "$s"
+
+i=0
+while [ "$#" -gt 0 ]
+do
+  name="$1"; keys="$2"; shift 2; i=$((i+1))
+  tmux new-window -d -t "$s:$i" -n "$name"
+  tmux send-keys -t "$s:$i" "$keys" C-m
+done
+
+tmux kill-window -t "$s:0"
+tmux select-window -t "$s:2"
+tmux select-window -t "$s:1"
+tmux -2 attach-session -d
