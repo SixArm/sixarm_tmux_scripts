@@ -30,9 +30,9 @@ out () { printf %s\\n "$*" ; }
 #   * 4:cc (console) = `rails console`
 #   * 5:db (database) = `rails db -p`
 #   * 6:ws (webserver) = `rails server`
-#   * 7:bg (background)
-#   * 8:cd (continuous deployment)
-#   * 9:op (operations & processes, such as devops, metrics, analytics) 
+#   * 7:bg (background misc. work, such as command line tools)
+#   * 8:cd (continuous deployment, such as integration and delivery)
+#   * 9:op (operations monitoring, such as metrics and analytics) 
 #
 # ## Commands
 #
@@ -101,27 +101,24 @@ echo -e "\033]1;$s\007"
 # Create the new session.
 tmux new-session -A -D -d -s "$s"
 
-# Create the windows.
-tmux new-window -d -t "$s:1" -n "ed"
-tmux new-window -d -t "$s:2" -n "qa"
-tmux new-window -d -t "$s:3" -n "ll"
-tmux new-window -d -t "$s:4" -n "cc"
-tmux new-window -d -t "$s:5" -n "db"
-tmux new-window -d -t "$s:6" -n "ws"
-tmux new-window -d -t "$s:7" -n "bg"
-tmux new-window -d -t "$s:8" -n "cd"
-tmux new-window -d -t "$s:9" -n "op"
+window(){
+  t="$1"; name="$2"; keys="$3"
+  [ -z "$name" ] || tmux new-window -d -t "$t" -n "$name"
+  [ -z "$keys" ] || tmux send-keys -t "$t" "$keys" C-m
+}
+
+window "$s:1" "${TMUX_RAILS_WINDOW_1_NAME:-ed}" "${TMUX_RAILS_WINDOW_1_KEYS:-$EDITOR}"
+window "$s:2" "${TMUX_RAILS_WINDOW_2_NAME:-qa}" "${TMUX_RAILS_WINDOW_2_KEYS:-$RAKE spec}"
+window "$s:3" "${TMUX_RAILS_WINDOW_3_NAME:-ll}" "${TMUX_RAILS_WINDOW_3_KEYS:-cd log && tail -f $RAILS_ENV.log}"
+window "$s:4" "${TMUX_RAILS_WINDOW_4_NAME:-cc}" "${TMUX_RAILS_WINDOW_4_KEYS:-$RAILS console}"
+window "$s:5" "${TMUX_RAILS_WINDOW_5_NAME:-db}" "${TMUX_RAILS_WINDOW_5_KEYS:-$RAILS db}"
+window "$s:6" "${TMUX_RAILS_WINDOW_6_NAME:-ws}" "${TMUX_RAILS_WINDOW_6_KEYS:-$RAILS server}"
+window "$s:7" "${TMUX_RAILS_WINDOW_7_NAME:-bg}" "${TMUX_RAILS_WINDOW_7_KEYS:-}"
+window "$s:8" "${TMUX_RAILS_WINDOW_8_NAME:-cd}" "${TMUX_RAILS_WINDOW_8_KEYS:-}"
+window "$s:9" "${TMUX_RAILS_WINDOW_9_NAME:-op}" "${TMUX_RAILS_WINDOW_9_KEYS:-}"
+
+# Last steps.
 tmux kill-window -t 0
-
-# Send keys.
-tmux send-keys -t "ed" "$EDITOR" C-m
-tmux send-keys -t "qa" "$RAKE spec" C-m
-tmux send-keys -t "ll" "cd log && tail -f $RAILS_ENV.log" C-m
-tmux send-keys -t "cc" "$RAILS console" C-m
-tmux send-keys -t "db" "$RAILS db" C-m
-tmux send-keys -t "ws" "$RAILS server" C-m
-
-# Last step: attach to the session
 tmux select-window -t "$s:2"
 tmux select-window -t "$s:1"
 tmux -2 attach-session -d
