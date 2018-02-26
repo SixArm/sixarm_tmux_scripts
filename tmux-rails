@@ -24,14 +24,14 @@ out () { printf %s\\n "$*" ; }
 #
 # The script launches these windows with these commands:
 #
-#   * !1:edit = $EDITOR
-#   * @2:test = rake test
-#   * #3:log = cd log && tail -f development.log
-#   * $4:con = rails console
-#   * %5:db = rails db
-#   * ^6:server = rails server
-#   * &6:deploy = rake deploy
-#
+#   * 1:edit = $EDITOR
+#   * 2:test = rake test
+#   * 3:log = cd log && tail -f development.log
+#   * 4:console = rails console
+#   * 5:db = rails db
+#   * 6:server = rails server
+#   * 7:deploy
+#   * 8:prod 
 #
 # ## Commands
 #
@@ -47,9 +47,9 @@ out () { printf %s\\n "$*" ; }
 # ## Tracking
 #
 # Program: tmux-rails
-# Version: 3.0.0
+# Version: 3.1.0
 # Created: 2013-08-02
-# Updated: 2017-03-33
+# Updated: 2018-02-25
 # License: GPL
 # Contact: Joel Parker Henderson (joel@joelparkerhenderson.com)
 ##
@@ -97,15 +97,18 @@ s=${1-`basename \`pwd\``}
 echo -e "\033]1;$s\007"
 
 # Create the new session.
-tmux new-session -d -s "$s"
+tmux new-session -A -D -d -s "$s"
 
 # Create the windows.
-tmux rename-window  "edit"
-tmux new-window -d -n "test"
-tmux new-window -d -n "log"
-tmux new-window -d -n "console"
-tmux new-window -d -n "db"
-tmux new-window -d -n "server"
+tmux new-window -d -t "$s:1" -n "edit"
+tmux new-window -d -t "$s:2" -n "test"
+tmux new-window -d -t "$s:3" -n "log"
+tmux new-window -d -t "$s:4" -n "console"
+tmux new-window -d -t "$s:5" -n "db"
+tmux new-window -d -t "$s:6" -n "server"
+tmux new-window -d -t "$s:7" -n "deploy"
+tmux new-window -d -t "$s:8" -n "prod"
+tmux kill-window -t "$s:0"
 
 # Send keys.
 tmux send-keys -t "edit" "$EDITOR" C-m
@@ -115,5 +118,7 @@ tmux send-keys -t "console" "$RAILS console" C-m
 tmux send-keys -t "db" "$RAILS db" C-m
 tmux send-keys -t "server" "$RAILS server" C-m
 
-# Last step: attatch to the session.
+# Last step: attatch to the session and select the window
+tmux select-window -t "edit"
 tmux -2 attach-session -d
+
