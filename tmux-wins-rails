@@ -8,12 +8,12 @@ cmd() { command -v $1 >/dev/null 2>&1 ; }
 #
 # Syntax:
 #
-#     tmux-rails [session-name]
+#     tmux-wins-rails [session-name]
 #
 # Example:
 #
 #     cd myapp
-#     tmux-rails
+#     tmux-wins-rails
 #
 #
 # ## What this does
@@ -56,6 +56,11 @@ cmd() { command -v $1 >/dev/null 2>&1 ; }
 # Contact: Joel Parker Henderson (joel@joelparkerhenderson.com)
 ##
 
+# Choose an editor, or none.
+if [ -z ${EDITOR+_} ]; then
+  EDITOR=""
+fi
+
 # Choose a command for bundle.
 if [ -z ${BUNDLE_EXEC+_} ]; then
   if $(cmd bundle); then
@@ -70,7 +75,7 @@ if [ -z ${RAILS+_} ]; then
   if [ -x 'bin/rails' ]; then
     RAILS="bin/rails"
   else
-    RAILS="$bundle_exec rails"
+    RAILS="$BUNDLE_EXEC rails"
   fi
 fi
 
@@ -79,16 +84,17 @@ if [ -z ${RAKE+_} ]; then
   if [ -x 'bin/rake' ]; then
     RAKE="bin/rake"
   else
-    RAKE="$bundle_exec rake"
+    RAKE="$BUNDLE_EXEC rake"
   fi
 fi
 
+# The Rails environment default is "development".
 RAILS_ENV=${RAILS_ENV:-development}
 
-# The session name defaults to the current directory's basename.
-s=${1-`basename \`pwd\``}
+# The session name default is the current directory's basename.
+session_name=${1-$(basename $(pwd))}
 
-tmux-start \
+tmux-wins "$session_name" \
 "ed" "$EDITOR" \
 "qa" "$RAKE spec" \
 "ll" "cd log && tail -f $RAILS_ENV.log"
@@ -97,4 +103,4 @@ tmux-start \
 "ws" "$RAILS server" \
 "bg" "" \
 "cd" "" \
-"op" "" \
+"op" ""
