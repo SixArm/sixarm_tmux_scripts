@@ -1,0 +1,79 @@
+#!/bin/zsh
+set -euf -o pipefail
+out() { printf %s\\n "$*" ; }
+cmd() { command -v $1 >/dev/null 2>&1 ; }
+
+##
+# Launch tmux with a sesson and windows suitable for Sapper development.
+#
+# Syntax:
+#
+#     tmux-starter-with-sapper [session-name]
+#
+# Example:
+#
+#     cd myapp
+#     tmux-starter-with-sapper
+#
+#
+# ## What this does
+#
+# The script attaches to session-name.
+#
+#   * If the session doesn't exist, then this creates it.
+#   * The _session-name_ defaults to the basename of the pwd.
+#
+# The script launches these windows with these commands:
+#
+#   * 1:ed (editor) = `$EDITOR`
+#   * 2:qa (quality assurance) = `npm run cy:run`
+#   * 3:ll (log listing) = `cd log && tail -f $SAPPER_ENV.log`
+#   * 4:cc (console) = `sapper console`
+#   * 5:db (database) = `psql`
+#   * 6:ws (webserver) = `npm run dev`
+#   * 7:bg (background misc. work, such as command line tools)
+#   * 8:cd (continuous deployment, such as integration and delivery)
+#   * 9:op (operations monitoring, such as metrics and analytics) 
+#
+# ## Commands
+#
+# This script will choose the "sapper" command:
+#
+#   * If the $sapper env var is set, then use it.
+#   * If "bin/sapper" is runnable, then use it.
+#   * If "bundle" command is runnable, then use "bundle exec sapper".
+#
+# This script will do the same as above for the "rake" command.
+#
+#
+# ## Tracking
+#
+# Program: tmux-sapper
+# Version: 1.0.0
+# Created: 2019-11-04
+# Updated: 2019-11-04
+# License: GPL
+# Contact: Joel Parker Henderson (joel@joelparkerhenderson.com)
+##
+
+# Choose an editor, or none.
+if [ -z ${EDITOR+_} ]; then
+  EDITOR=""
+fi
+
+# The sapper environment default is "dev".
+SAPPER_ENV=${SAPPER_ENV:-dev}
+
+# The session name default is the current directory's basename.
+session_name=${1-$(basename $(pwd))}
+
+tmux-starter "$session_name" \
+"ed" "$EDITOR" \
+"qa" "npm run cy:run" \
+"ll" "cd log && tail -f $SAPPER_ENV.log" \
+"cc" "" \
+"db" "psql" \
+"ws" "npm run $SAPPER_ENV" \
+"bg" ":" \
+"cd" ":" \
+"op" ":"
